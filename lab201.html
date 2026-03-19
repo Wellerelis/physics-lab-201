@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Работа 2.01 — Эффект Холла в полупроводнике</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --navy:     #102C26;
+  --navy2:    #1a3d35;
+  --navy3:    #234f44;
+  --silver:   #F7E7CE;
+  --silver2:  #f0ddc0;
+  --silver3:  #e8d0a8;
+  --silver-bg:#fdf6ea;
+  --white:    #ffffff;
+  --ink:      #0e1f1b;
+  --ink2:     #3a5048;
+  --ink3:     #7a9a92;
+  --border:   rgba(16,44,38,0.12);
+  --border2:  rgba(16,44,38,0.06);
+  --red:      #8b2e1a;
+  --red-bg:   #fdf2ee;
+  --gold:     #8a6020;
+  --gold-bg:  #fdf8ed;
+  --green-ok: #1a5a30;
+  --green-bg: #eef7f1;
+  --warn:     #7a5c00;
+  --warn-bg:  #fdf8ed;
+  --mono:     'DM Mono', 'Courier New', monospace;
+  --sans:     'DM Sans', system-ui, sans-serif;
+  --display:  'Syne', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--silver-bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ────────── HEADER ────────── */
+.hdr {
+  background: var(--navy);
+  color: var(--silver);
+  padding: 0 48px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 300;
+}
+.hdr-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: rgba(232,238,247,0.12);
+  border: 1px solid rgba(232,238,247,0.25);
+  color: var(--silver);
+  padding: 4px 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.hdr h1 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--silver);
+}
+.hdr-meta {
+  margin-left: auto;
+  font-size: 11px;
+  color: rgba(232,238,247,0.4);
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+/* ────────── NAV ────────── */
+.nav {
+  background: var(--navy);
+  border-bottom: 1px solid rgba(232,238,247,0.1);
+  padding: 0 48px;
+  display: flex;
+  position: sticky;
+  top: 62px;
+  z-index: 200;
+  overflow-x: auto;
+  gap: 0;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nb {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: rgba(232,238,247,0.45);
+  padding: 14px 22px;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .2s, border-color .2s;
+  text-transform: uppercase;
+}
+.nb:hover { color: rgba(232,238,247,0.75); }
+.nb.on {
+  color: var(--silver);
+  border-bottom-color: var(--silver2);
+}
+
+/* ────────── LAYOUT ────────── */
+.wrap { max-width: 1120px; margin: 0 auto; padding: 36px 48px 96px; }
+.tab { display: none; }
+.tab.on { display: block; }
+
+/* ────────── PAGE HEADING ────────── */
+.pg-title {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--navy);
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+.pg-sub {
+  font-size: 13px;
+  color: var(--ink3);
+  margin-bottom: 32px;
+  font-weight: 300;
+}
+
+/* ────────── SECTION LABEL ────────── */
+.sec-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 36px 0 16px;
+}
+.sec-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--silver2);
+  background: var(--navy);
+  padding: 3px 9px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+.sec-text {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink2);
+  flex: 1;
+}
+.sec-line { height: 1px; flex: 1; background: var(--border); }
+
+/* ────────── CARD ────────── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(13,31,60,0.06);
+}
+.card-hd {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--border2);
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--ink2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(232,238,247,0.35);
+}
+.card-hd.dark {
+  background: var(--navy);
+  color: var(--silver);
+  border-bottom: none;
+}
+.card-body { padding: 22px; }
+
+/* ────────── GRID ────────── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+
+/* ────────── INPUTS ────────── */
+.fld { display: flex; flex-direction: column; gap: 6px; }
+.fld label {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink2);
+}
+.fld label .u { font-weight: 400; text-transform: none; color: var(--ink3); letter-spacing: 0; }
+.fld input[type=number],
+.fld input[type=text] {
+  font-family: var(--mono);
+  font-size: 14px;
+  background: var(--silver-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  padding: 9px 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  width: 100%;
+}
+.fld input:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(13,31,60,0.08);
+  background: var(--white);
+}
+.fld input:disabled {
+  color: var(--ink3);
+  cursor: default;
+  background: rgba(232,238,247,0.5);
+}
+.fld .hint {
+  font-size: 11px;
+  color: var(--ink3);
+  font-weight: 300;
+}
+
+/* ────────── DERIVED ROW ────────── */
+.derived {
+  background: rgba(13,31,60,0.04);
+  border: 1.5px solid rgba(13,31,60,0.14);
+  border-radius: 6px;
+  padding: 12px 18px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.derived .d-lbl { font-family: var(--display); font-size: 12px; font-weight: 700; color: var(--navy); }
+.derived .d-eq  { color: var(--ink3); font-size: 12px; }
+.derived .d-val { font-family: var(--mono); font-size: 17px; font-weight: 500; color: var(--navy); }
+.derived .d-calc { font-size: 11px; color: var(--ink3); font-weight: 300; }
+
+/* ────────── DATA TABLE ────────── */
+.tbl-wrap { overflow-x: auto; }
+table.dt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.dt th {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--silver);
+  background: var(--navy);
+  padding: 11px 14px;
+  text-align: center;
+  white-space: nowrap;
+  border-right: 1px solid rgba(232,238,247,0.1);
+}
+table.dt th:last-child { border-right: none; }
+table.dt th.sub { background: var(--navy2); }
+table.dt td {
+  border-bottom: 1px solid var(--border2);
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 4px;
+}
+table.dt tr:hover td { background: rgba(232,238,247,0.45); }
+table.dt td.rn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  width: 36px;
+  padding: 8px 4px;
+  background: rgba(232,238,247,0.3);
+  border-right: 1px solid var(--border);
+}
+table.dt td.cv {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--navy);
+  padding: 8px 12px;
+  font-weight: 500;
+}
+table.dt td.cv.em { color: var(--ink3); font-weight: 400; }
+table.dt td input {
+  font-family: var(--mono);
+  font-size: 13px;
+  border: 1.5px solid transparent;
+  border-radius: 4px;
+  padding: 6px 8px;
+  width: 112px;
+  text-align: center;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .12s, background .12s;
+}
+table.dt td input:focus {
+  border-color: var(--navy);
+  background: var(--white);
+}
+.del-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink3);
+  font-size: 16px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: color .12s, background .12s;
+  line-height: 1;
+}
+.del-btn:hover { color: var(--red); background: var(--red-bg); }
+
+/* ────────── FORMULA BOX ────────── */
+.fm {
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--navy);
+  border-radius: 0 6px 6px 0;
+  padding: 16px 20px;
+  margin: 12px 0;
+  background: rgba(232,238,247,0.18);
+  line-height: 1.9;
+}
+.fm .fn {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 6px;
+}
+.fm .fe {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--navy);
+}
+.fm .fe.hi { color: var(--red); }
+.fm .fs {
+  font-size: 12px;
+  color: var(--ink2);
+  margin-top: 4px;
+  font-weight: 300;
+}
+.fm .fr {
+  display: inline-block;
+  background: rgba(13,31,60,0.06);
+  border: 1.5px solid rgba(13,31,60,0.15);
+  border-radius: 5px;
+  padding: 7px 16px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--navy);
+  margin-top: 12px;
+}
+
+/* ────────── BIG RESULT ────────── */
+.big-r {
+  background: var(--navy);
+  border-radius: 8px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin: 18px 0;
+}
+.big-r .sym {
+  font-family: 'Syne', Georgia, serif;
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--silver);
+  opacity: 0.7;
+  min-width: 46px;
+  font-style: italic;
+}
+.big-r .lbl {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(232,238,247,0.55);
+  margin-bottom: 5px;
+}
+.big-r .val {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--silver);
+}
+.big-r .u2 {
+  font-size: 13px;
+  color: rgba(232,238,247,0.55);
+  margin-left: 6px;
+  font-weight: 300;
+}
+
+/* ────────── CHIPS ────────── */
+.chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.chip {
+  background: var(--silver-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  min-width: 130px;
+  transition: border-color .15s;
+}
+.chip:hover { border-color: var(--navy); }
+.chip .cl {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ink3);
+  margin-bottom: 4px;
+}
+.chip .cv2 {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.chip.hl { background: var(--navy); border-color: var(--navy); }
+.chip.hl .cl { color: rgba(232,238,247,0.5); }
+.chip.hl .cv2 { color: var(--silver); }
+
+/* ────────── CHART CONTAINER ────────── */
+.ch-wrap {
+  position: relative;
+  height: 440px;
+  background: var(--white);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* ────────── NOTICES ────────── */
+.notice {
+  border-radius: 6px;
+  padding: 11px 16px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 300;
+}
+.notice.info  { background: rgba(13,31,60,0.06); border: 1.5px solid rgba(13,31,60,0.15); color: var(--navy2); }
+.notice.warn  { background: var(--warn-bg); border: 1.5px solid #e8d090; color: var(--warn); }
+.notice.good  { background: var(--green-bg); border: 1.5px solid #a8d8b0; color: var(--green-ok); }
+.notice.bad   { background: var(--red-bg); border: 1.5px solid #f0b8b0; color: var(--red); }
+
+/* ────────── RESULT LINES ────────── */
+.rlines { display: flex; flex-direction: column; }
+.rline {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border2);
+}
+.rline:last-child { border-bottom: none; }
+.rline .rk {
+  font-size: 13px;
+  color: var(--ink2);
+  min-width: 260px;
+  font-weight: 400;
+}
+.rline .rv {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--navy);
+}
+.rline .rv.hi { color: var(--red); }
+.rline .ru { font-size: 11px; color: var(--ink3); font-weight: 300; }
+.rline.sep { padding: 4px 0; border-bottom: 1px dashed var(--border2); min-height: 0; }
+
+/* ────────── PARAMS TABLE ────────── */
+.pt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pt td { padding: 9px 16px; border-bottom: 1px solid var(--border2); }
+.pt tr:last-child td { border-bottom: none; }
+.pt td:first-child { font-family: var(--mono); font-weight: 500; color: var(--navy); width: 60px; font-size: 12px; }
+.pt td:nth-child(2) { font-family: var(--mono); color: var(--ink); font-weight: 400; }
+.pt td:nth-child(3) { color: var(--ink3); font-size: 11px; width: 50px; }
+.pt td:nth-child(4) { color: var(--ink3); font-size: 11px; text-align: right; font-weight: 300; }
+
+/* ────────── BUTTONS ────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 5px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all .15s;
+}
+.btn-outline {
+  background: transparent;
+  color: var(--ink2);
+  border-color: var(--border);
+}
+.btn-outline:hover { border-color: var(--navy); color: var(--navy); }
+.btn-solid {
+  background: var(--navy);
+  color: var(--silver);
+  border-color: var(--navy);
+}
+.btn-solid:hover { background: var(--navy2); }
+
+/* ────────── SCALE BUTTONS ────────── */
+.scale-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.scale-row .lbl {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(232,238,247,0.5);
+}
+.scale-btn {
+  padding: 4px 12px;
+  border: 1px solid rgba(232,238,247,0.2);
+  border-radius: 3px;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  color: rgba(232,238,247,0.55);
+  transition: all .12s;
+}
+.scale-btn:hover, .scale-btn.on {
+  background: rgba(232,238,247,0.15);
+  color: var(--silver);
+  border-color: rgba(232,238,247,0.5);
+}
+.pp-trim-btn {
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--ink2);
+  transition: all .12s;
+}
+.pp-trim-btn:hover, .pp-trim-btn.on {
+  background: var(--navy);
+  color: var(--silver);
+  border-color: var(--navy);
+}
+
+/* ────────── PROTOCOL ────────── */
+.proto {
+  background: var(--navy);
+  border-radius: 8px;
+  padding: 32px 36px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 2;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 700px;
+  overflow-y: auto;
+  color: rgba(232,238,247,0.85);
+}
+.proto::-webkit-scrollbar { width: 6px; height: 6px; }
+.proto::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.proto::-webkit-scrollbar-thumb { background: rgba(232,238,247,0.2); border-radius: 3px; }
+
+/* ────────── TOAST ────────── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--navy);
+  color: var(--silver);
+  padding: 11px 22px;
+  border-radius: 6px;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all .22s cubic-bezier(.16,1,.3,1);
+  pointer-events: none;
+  z-index: 999;
+  box-shadow: 0 8px 24px rgba(13,31,60,0.3);
+}
+.toast.on { opacity: 1; transform: translateY(0); }
+
+/* ────────── CHECKS ────────── */
+.chklist { display: flex; flex-direction: column; gap: 8px; }
+.chk {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  font-weight: 400;
+}
+.chk.ok  { background: var(--green-bg); border-color: #a8d8b0; color: var(--green-ok); }
+.chk.bad { background: var(--warn-bg); border-color: #e8d090; color: var(--warn); }
+.chk-icon { font-size: 14px; flex-shrink: 0; }
+
+hr.div { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+@media(max-width:768px){
+  .wrap { padding: 18px 18px 72px; }
+  .g2,.g3,.g4 { grid-template-columns: 1fr; }
+  .hdr,.nav { padding-left: 18px; padding-right: 18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-badge">2.01</div>
+  <h1>Эффект Холла в полупроводнике</h1>
+  <span class="hdr-meta">СПбПУ Петра Великого · ДХК-0.5 (Si, n-тип)</span>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nb on"  onclick="go('params',this)">Параметры</button>
+  <button class="nb"     onclick="go('theory',this)">Теория</button>
+  <button class="nb"     onclick="go('vax',this)">ВАХ (Табл.1)</button>
+  <button class="nb"     onclick="go('hall',this)">ХЭДС (Табл.2)</button>
+  <button class="nb"     onclick="go('tables',this)">Табл.3 &amp; 4</button>
+  <button class="nb"     onclick="go('calc',this)">Обработка</button>
+  <button class="nb"     onclick="go('proto',this)">Протокол</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ═══ 1. ПАРАМЕТРЫ ═══ -->
+<div id="tab-params" class="tab on">
+  <div class="pg-title">Параметры</div>
+  <div class="pg-sub">Геометрические размеры образца и коэффициент электромагнита</div>
+
+  <div class="g2">
+    <div>
+      <div class="card">
+        <div class="card-hd">Геометрия образца (датчик Холла ДХК-0.5)</div>
+        <div class="card-body">
+          <div class="g4">
+            <div class="fld">
+              <label>d <span class="u">толщина, мкм</span></label>
+              <input type="number" id="d_um" value="7.000" step="0.001" min="0.001">
+              <div class="hint">7.000 ± 0.010 мкм со стенда</div>
+            </div>
+            <div class="fld">
+              <label>Δd <span class="u">мкм</span></label>
+              <input type="number" id="dd_um" value="0.010" step="0.001" min="0">
+            </div>
+            <div class="fld">
+              <label>l <span class="u">длина, мм</span></label>
+              <input type="number" id="l_mm" value="1.00" step="0.01" min="0.01">
+              <div class="hint">1.00 ± 0.10 мм со стенда</div>
+            </div>
+            <div class="fld">
+              <label>Δl <span class="u">мм</span></label>
+              <input type="number" id="dl_mm" value="0.10" step="0.01" min="0">
+            </div>
+            <div class="fld">
+              <label>h <span class="u">ширина, мм</span></label>
+              <input type="number" id="h_mm" value="1.00" step="0.01" min="0.01">
+              <div class="hint">1.00 ± 0.10 мм со стенда</div>
+            </div>
+            <div class="fld">
+              <label>Δh <span class="u">мм</span></label>
+              <input type="number" id="dh_mm" value="0.10" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="derived">
+            <span class="d-lbl">S = d·h</span>
+            <span class="d-eq">=</span>
+            <span class="d-val" id="S-val">—</span>
+            <span class="d-lbl">м²</span>
+            <span class="d-eq">&nbsp;&nbsp;&nbsp; l/S =</span>
+            <span class="d-val" id="lS-val">—</span>
+            <span class="d-lbl">м⁻¹</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-hd">Электромагнит и ток образца</div>
+        <div class="card-body">
+          <div class="g2">
+            <div class="fld">
+              <label>K <span class="u">Тл/А</span></label>
+              <input type="number" id="K_coef" value="2.080" step="0.001" min="0.001">
+              <div class="hint">B = K·I<sub>M</sub> — с таблички стенда</div>
+            </div>
+            <div class="fld">
+              <label>ΔK <span class="u">Тл/А</span></label>
+              <input type="number" id="dK_coef" value="0.010" step="0.001" min="0">
+              <div class="hint">погрешность K</div>
+            </div>
+            <div class="fld">
+              <label>I <span class="u">ток образца, мА</span></label>
+              <input type="number" id="I_sample" value="3" step="0.1" min="0.01">
+              <div class="hint">фиксированный ток при измерении ХЭДС</div>
+            </div>
+            <div class="fld">
+              <label>ΔI <span class="u">мА</span></label>
+              <input type="number" id="dI_sample" value="0.1" step="0.01" min="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">Точность приборов (мультиметры Master)</div>
+        <div class="card-body">
+          <div class="g2">
+            <div class="fld">
+              <label>Δприб V1 <span class="u">В</span></label>
+              <input type="number" id="dV_instr" value="0.005" step="0.001" min="0">
+              <div class="hint">V1 (U‖), диапазон 20 В — половина цены дел. = 0.005 В</div>
+            </div>
+            <div class="fld">
+              <label>Δприб V2 <span class="u">мВ</span></label>
+              <input type="number" id="dmV_instr" value="0.1" step="0.1" min="0">
+              <div class="hint">V2 (U⊥), диапазон 200 мВ — половина цены дел. = 0.1 мВ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Сводка параметров (СИ)</div>
+    <div class="card-body" style="padding:0">
+      <table class="pt"><tbody id="pt-body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 2. ТЕОРИЯ ═══ -->
+<div id="tab-theory" class="tab">
+  <div class="pg-title">Теоретические основы</div>
+  <div class="pg-sub">Ключевые уравнения методички к работе 2.01</div>
+
+  <div class="fm">
+    <div class="fn">Уравнение (1) — ХЭДС</div>
+    <div class="fe">U⊥ = R · (I·B) / d</div>
+    <div class="fs">R — константа Холла [м³/Кл], d — толщина образца, I — ток, B — индукция поля</div>
+  </div>
+  <div class="fm">
+    <div class="fn">Уравнение (2) — Закон Ома</div>
+    <div class="fe">I = U‖ / r = σ · (S/l) · U‖</div>
+    <div class="fs">σ — удельная проводимость, S = d·h — площадь сечения, l — длина</div>
+  </div>
+  <div class="fm">
+    <div class="fn">Уравнения (5)–(6) — Проводимость</div>
+    <div class="fe">j = σ · E‖ = σ · (U‖/l) &nbsp;&nbsp; σ = 1/ρ = (I/U‖) · (l/S)</div>
+    <div class="fs">Из ВАХ: σ = (dI/dU‖) · (l/S) — наклон × геометрия</div>
+  </div>
+  <div class="fm">
+    <div class="fn">Уравнение (12) — Константа Холла из эксперимента</div>
+    <div class="fe hi">R = U⊥ · d / (I · B) = (dU⊥/dB) · d / I</div>
+    <div class="fs">Из графика U⊥(B): угловой коэффициент a = dU⊥/dB → R = a·d/I</div>
+  </div>
+  <div class="fm">
+    <div class="fn">Уравнение (13) — Концентрация носителей</div>
+    <div class="fe">n = 1 / (e · R)</div>
+    <div class="fs">e = 1.6×10⁻¹⁹ Кл</div>
+  </div>
+  <div class="fm">
+    <div class="fn">Уравнение (14) — Подвижность носителей</div>
+    <div class="fe hi">μ = σ · R</div>
+    <div class="fs">μ — подвижность [м²/(В·с)], σ — из ВАХ, R — константа Холла</div>
+  </div>
+  <div class="fm" style="border-left-color:var(--red)">
+    <div class="fn">Погрешности (формулы косвенных измерений)</div>
+    <div class="fe hi">δR = √[(δa)² + (δd)² + (δI)²]</div>
+    <div class="fe hi">δn = δR &nbsp;&nbsp; δμ = √[(δσ)² + (δR)²]</div>
+    <div class="fs">δσ из метода парных точек по ВАХ · δa из метода парных точек по U⊥(B)</div>
+  </div>
+</div>
+
+<!-- ═══ 3. ВАХ ═══ -->
+<div id="tab-vax" class="tab">
+  <div class="pg-title">Таблица 1 — ВАХ</div>
+  <div class="pg-sub">I(U‖) при B = 0. Ток образца: от 0.2 до 3.0 мА, шаг 0.2 мА (16 точек). V1 диапазон 20 В, mA диапазон 20 мА.</div>
+
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">Результаты измерений I(U‖)</span>
+      <button class="btn btn-outline" onclick="addVaxRow()" style="font-size:10px;padding:5px 12px;color:rgba(232,238,247,0.75);border-color:rgba(232,238,247,0.25)">+ строка</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>U‖, В</th>
+            <th>I, мА</th>
+            <th class="sub">I, А</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="vaxBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Проверка условий ВАХ</div>
+    <div class="card-body"><div class="chklist" id="vax-checks"></div></div>
+  </div>
+</div>
+
+<!-- ═══ 4. ХЭДС ═══ -->
+<div id="tab-hall" class="tab">
+  <div class="pg-title">Таблица 2 — ХЭДС</div>
+  <div class="pg-sub">U⊥(B) при I = <span id="hall-I-label">3</span> мА. Ток магнита: от 0.02 до 0.22 А, шаг 0.02 А (11 точек). V2 диапазон 200 мВ.</div>
+
+  <div class="notice info" id="hall-info">Установите ток образца на вкладке «Параметры».</div>
+
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">Результаты измерений U⊥(I<sub>M</sub>)</span>
+      <button class="btn btn-outline" onclick="addHallRow()" style="font-size:10px;padding:5px 12px;color:rgba(232,238,247,0.75);border-color:rgba(232,238,247,0.25)">+ строка</button>
+    </div>
+    <div class="notice info" style="margin:10px 14px 0;font-size:12px">
+      <span>ℹ</span>
+      <span>Вводите ток магнита I<sub>M</sub> в амперах. B = K·I<sub>M</sub> рассчитывается автоматически. U⊥ вводится в милливольтах.</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>I<sub>M</sub>, А</th>
+            <th>U⊥, мВ</th>
+            <th class="sub">B = K·I<sub>M</sub>, Тл</th>
+            <th class="sub">U⊥, В</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="hallBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Проверка данных ХЭДС</div>
+    <div class="card-body"><div class="chklist" id="hall-checks"></div></div>
+  </div>
+</div>
+
+<!-- ═══ ТАБЛ. 3 & 4 ═══ -->
+<div id="tab-tables" class="tab">
+  <div class="pg-title">Таблицы 3 и 4</div>
+  <div class="pg-sub">Вычисление σ и R методом парных точек — по форме из методички</div>
+
+  <!-- ─── ТАБЛИЦА 3 ─── -->
+  <div class="sec-label">
+    <span class="sec-num">Табл. 3</span>
+    <span class="sec-text">Вычисление удельной проводимости образца</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="notice info" id="t3-info" style="margin-bottom:12px">
+    Размеры образца и l/S берутся из вкладки «Параметры».
+  </div>
+
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">σ = (I/U‖) · (l/S)</span>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:11px;color:rgba(247,231,206,0.5);font-family:var(--mono)">Пары:</span>
+        <button class="pp-trim-btn on" id="t3-trim-0" onclick="setT3Trim(0)" style="font-size:10px">1…n</button>
+        <button class="pp-trim-btn"   id="t3-trim-1" onclick="setT3Trim(1)" style="font-size:10px">2…n</button>
+        <button class="pp-trim-btn"   id="t3-trim-2" onclick="setT3Trim(2)" style="font-size:10px">3…n</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="dt" id="t3-table">
+        <thead>
+          <tr>
+            <th>№№ точек</th>
+            <th>I₁, мА</th>
+            <th>U‖₁, В</th>
+            <th>I₂, мА</th>
+            <th>U‖₂, В</th>
+            <th>σ = ΔI/ΔU · l/S, (Ом·м)⁻¹</th>
+            <th class="sub">σ − ⟨σ⟩</th>
+            <th class="sub">(σ − ⟨σ⟩)²</th>
+          </tr>
+        </thead>
+        <tbody id="t3-body"></tbody>
+        <tfoot id="t3-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="t3-result-card">
+    <div class="card-body">
+      <div class="fm">
+        <div class="fn">Результат — удельная проводимость</div>
+        <div class="fe" id="t3-formula">—</div>
+        <div class="fr" id="t3-sigma">⟨σ⟩ = —</div>
+      </div>
+      <div style="margin-top:14px"><div class="rlines" id="t3-err-lines"></div></div>
+    </div>
+  </div>
+
+  <!-- ─── ТАБЛИЦА 4 ─── -->
+  <div class="sec-label">
+    <span class="sec-num">Табл. 4</span>
+    <span class="sec-text">Вычисление константы Холла</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="notice info" id="t4-info" style="margin-bottom:12px">
+    d/I = (толщина образца) / (ток образца) — из вкладки «Параметры».
+  </div>
+
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">R = U⊥ · d / (I · B) = (ΔU⊥/ΔB) · d/I</span>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:11px;color:rgba(247,231,206,0.5);font-family:var(--mono)">Пары:</span>
+        <button class="pp-trim-btn on" id="t4-trim-0" onclick="setT4Trim(0)" style="font-size:10px">1…n</button>
+        <button class="pp-trim-btn"   id="t4-trim-1" onclick="setT4Trim(1)" style="font-size:10px">2…n</button>
+        <button class="pp-trim-btn"   id="t4-trim-2" onclick="setT4Trim(2)" style="font-size:10px">3…n</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="dt" id="t4-table">
+        <thead>
+          <tr>
+            <th>№№ точек</th>
+            <th>I<sub>M1</sub>, А</th>
+            <th>U⊥₁, мВ</th>
+            <th>I<sub>M2</sub>, А</th>
+            <th>U⊥₂, мВ</th>
+            <th>R = ΔU⊥/ΔB · d/I, м³/Кл</th>
+            <th class="sub">R − ⟨R⟩</th>
+            <th class="sub">(R − ⟨R⟩)²</th>
+          </tr>
+        </thead>
+        <tbody id="t4-body"></tbody>
+        <tfoot id="t4-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="t4-result-card">
+    <div class="card-body">
+      <div class="fm">
+        <div class="fn">Результат — константа Холла</div>
+        <div class="fe" id="t4-formula">—</div>
+        <div class="fr" id="t4-R">⟨R⟩ = —</div>
+      </div>
+      <div style="margin-top:14px"><div class="rlines" id="t4-err-lines"></div></div>
+      <div class="big-r" style="margin-top:18px">
+        <div class="sym">R</div>
+        <div>
+          <div class="lbl">Константа Холла (из Табл. 4)</div>
+          <div class="val" id="t4-R-big">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ 5. ОБРАБОТКА ═══ -->
+<div id="tab-calc" class="tab">
+  <div class="pg-title">Обработка</div>
+
+  <!-- ─── 01 ГРАФИК ВАХ ─── -->
+  <div class="sec-label">
+    <span class="sec-num">01</span>
+    <span class="sec-text">График ВАХ: I(U‖)</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">I от U‖ — линейная зависимость (закон Ома)</span>
+      <div class="scale-row">
+        <span class="lbl">Шаг:</span>
+        <button class="scale-btn on" id="vax-sc-auto" onclick="setVaxScale('auto',this)">авто</button>
+        <button class="scale-btn" id="vax-sc-1"    onclick="setVaxScale('1',this)">шаг ×1</button>
+        <button class="scale-btn" id="vax-sc-2"    onclick="setVaxScale('2',this)">шаг ×2</button>
+        <button class="scale-btn" id="vax-sc-5"    onclick="setVaxScale('5',this)">шаг ×5</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:16px">
+      <div class="ch-wrap"><canvas id="vaxChart"></canvas></div>
+      <div class="chips" id="vax-chips">
+        <div class="chip hl"><div class="cl">МНК уравнение</div><div class="cv2" id="vax-eq">—</div></div>
+        <div class="chip hl"><div class="cl">Наклон a (А/В)</div><div class="cv2" id="vax-a">—</div></div>
+        <div class="chip"><div class="cl">R² ВАХ</div><div class="cv2" id="vax-r2">—</div></div>
+        <div class="chip"><div class="cl">σ (из МНК)</div><div class="cv2" id="vax-sigma-mnk">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 02 ПАРНЫЕ ТОЧКИ ВАХ ─── -->
+  <div class="sec-label">
+    <span class="sec-num">02</span>
+    <span class="sec-text">Метод парных точек — ВАХ → σ</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="notice info">
+    Угловой коэффициент ВАХ: <strong>a = dI/dU‖</strong> [А/В]. Удельная проводимость: <strong>σ = a·(l/S)</strong>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Таблица попарных наклонов (ВАХ)</div>
+    <div class="card-body" style="padding-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="font-size:12px;font-weight:600;color:var(--ink2)">Крайние точки:</span>
+        <button class="pp-trim-btn on" id="vax-trim-0" onclick="setVaxTrim(0)">Опыты 1…n</button>
+        <button class="pp-trim-btn" id="vax-trim-1" onclick="setVaxTrim(1)">Опыты 2…n</button>
+        <button class="pp-trim-btn" id="vax-trim-2" onclick="setVaxTrim(2)">Опыты 3…n</button>
+      </div>
+      <div id="vax-paired-table"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="fm">
+        <div class="fn">Результат — удельная проводимость σ</div>
+        <div class="fe" id="vax-pp-eq">—</div>
+        <div class="fr" id="vax-pp-sigma">σ = —</div>
+      </div>
+      <div style="margin-top:14px"><div class="rlines" id="vax-pp-err-lines"></div></div>
+      <div class="big-r" style="margin-top:18px">
+        <div class="sym">σ</div>
+        <div>
+          <div class="lbl">Удельная проводимость образца</div>
+          <div class="val" id="sigma-big">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 03 ГРАФИК ХЭДС ─── -->
+  <div class="sec-label">
+    <span class="sec-num">03</span>
+    <span class="sec-text">График ХЭДС: U⊥(B)</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">U⊥ от B = K·I<sub>M</sub></span>
+      <div class="scale-row">
+        <span class="lbl">Шаг:</span>
+        <button class="scale-btn on" id="hall-sc-auto" onclick="setHallScale('auto',this)">авто</button>
+        <button class="scale-btn" id="hall-sc-1"    onclick="setHallScale('1',this)">шаг ×1</button>
+        <button class="scale-btn" id="hall-sc-2"    onclick="setHallScale('2',this)">шаг ×2</button>
+        <button class="scale-btn" id="hall-sc-5"    onclick="setHallScale('5',this)">шаг ×5</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:16px">
+      <div class="ch-wrap"><canvas id="hallChart"></canvas></div>
+      <div class="chips" id="hall-chips">
+        <div class="chip hl"><div class="cl">МНК уравнение</div><div class="cv2" id="hall-eq">—</div></div>
+        <div class="chip hl"><div class="cl">Наклон a (В/Тл)</div><div class="cv2" id="hall-a">—</div></div>
+        <div class="chip"><div class="cl">R² ХЭДС</div><div class="cv2" id="hall-r2">—</div></div>
+        <div class="chip"><div class="cl">Точек</div><div class="cv2" id="hall-n">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 04 ПАРНЫЕ ТОЧКИ ХЭДС ─── -->
+  <div class="sec-label">
+    <span class="sec-num">04</span>
+    <span class="sec-text">Метод парных точек — ХЭДС → R</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="notice info">
+    Угловой коэффициент ХЭДС: <strong>a = dU⊥/dB</strong> [В/Тл]. Константа Холла: <strong>R = a·d / I</strong>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Таблица попарных наклонов (ХЭДС)</div>
+    <div class="card-body" style="padding-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="font-size:12px;font-weight:600;color:var(--ink2)">Крайние точки:</span>
+        <button class="pp-trim-btn on" id="hall-trim-0" onclick="setHallTrim(0)">Опыты 1…n</button>
+        <button class="pp-trim-btn" id="hall-trim-1" onclick="setHallTrim(1)">Опыты 2…n</button>
+        <button class="pp-trim-btn" id="hall-trim-2" onclick="setHallTrim(2)">Опыты 3…n</button>
+      </div>
+      <div id="hall-paired-table"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="fm">
+        <div class="fn">Результат — константа Холла R</div>
+        <div class="fe" id="hall-pp-eq">—</div>
+        <div class="fr" id="hall-pp-R">R = —</div>
+      </div>
+      <div style="margin-top:14px"><div class="rlines" id="hall-pp-err-lines"></div></div>
+      <div class="big-r" style="margin-top:18px">
+        <div class="sym">R</div>
+        <div>
+          <div class="lbl">Константа Холла</div>
+          <div class="val" id="R-big">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 05 РЕЗУЛЬТАТЫ ─── -->
+  <div class="sec-label">
+    <span class="sec-num">05</span>
+    <span class="sec-text">Концентрация и подвижность носителей</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="card"><div class="card-body">
+    <div class="fm">
+      <div class="fn">n = 1/(e·R)</div>
+      <div class="fe">n = 1 / (1.6·10⁻¹⁹ · R)</div>
+      <div class="fs" id="n-sub">—</div>
+      <div class="fr" id="n-res">n = —</div>
+    </div>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <div class="fm">
+      <div class="fn">μ = σ·R</div>
+      <div class="fe">μ = σ · R</div>
+      <div class="fs" id="mu-sub">—</div>
+      <div class="fr" id="mu-res">μ = —</div>
+    </div>
+  </div></div>
+
+  <!-- ─── 06 ПОГРЕШНОСТИ ─── -->
+  <div class="sec-label">
+    <span class="sec-num">06</span>
+    <span class="sec-text">Погрешности</span>
+    <span class="sec-line"></span>
+  </div>
+
+  <div class="card"><div class="card-body">
+    <div class="fm">
+      <div class="fn">Погрешность константы Холла R</div>
+      <div class="fe">δR = √[(δa)² + (δd)²+ (δI)²]</div>
+      <div class="fs">δa из метода парных точек (включает приборную составляющую)</div>
+    </div>
+    <div class="fm">
+      <div class="fn">Погрешность концентрации n</div>
+      <div class="fe">δn = δR</div>
+    </div>
+    <div class="fm">
+      <div class="fn">Погрешность подвижности μ</div>
+      <div class="fe">δμ = √[(δσ)² + (δR)²]</div>
+    </div>
+    <div id="err-block" style="margin-top:16px">
+      <div class="rlines" id="err-lines"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ═══ 6. ПРОТОКОЛ ═══ -->
+<div id="tab-proto" class="tab">
+  <div class="pg-title">Протокол</div>
+  <div class="pg-sub">Вывод напишите самостоятельно — ниже указаны ключевые данные.</div>
+  <div class="card">
+    <div class="card-hd dark">
+      <span style="color:var(--silver);opacity:0.85">Текст протокола</span>
+      <button class="btn" style="background:rgba(232,238,247,0.12);color:var(--silver);border-color:rgba(232,238,247,0.25);font-size:10px" onclick="copyProto()">Скопировать</button>
+    </div>
+    <div class="proto" id="protocol">Введите данные для генерации протокола...</div>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast">Скопировано ✓</div>
+
+<script>
+const ECH = 1.6e-19;
+
+// ─── Data stores ───
+let vaxRows  = Array.from({length: 16}, () => ({u: '', i: ''}));  // I: 0.2…3.0 мА шаг 0.2
+let hallRows = Array.from({length: 11}, () => ({im: '', u_perp: ''})); // I_M: 0.02…0.22 А шаг 0.02
+let vaxTrim  = 0;
+let hallTrim = 0;
+let t3Trim   = 0;
+let t4Trim   = 0;
+let vaxChart  = null;
+let hallChart = null;
+let scaleModeVax  = 'auto';
+let scaleModeHall = 'auto';
+
+function setVaxScale(mode, btn) {
+  scaleModeVax = mode;
+  document.querySelectorAll('[id^="vax-sc-"]').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  recalc();
+}
+function setHallScale(mode, btn) {
+  scaleModeHall = mode;
+  document.querySelectorAll('[id^="hall-sc-"]').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  recalc();
+}
+function setT3Trim(n) {
+  t3Trim = n;
+  [0,1,2].forEach(i => { const b = document.getElementById(`t3-trim-${i}`); if(b) b.classList.toggle('on', i===n); });
+  recalc();
+}
+function setT4Trim(n) {
+  t4Trim = n;
+  [0,1,2].forEach(i => { const b = document.getElementById(`t4-trim-${i}`); if(b) b.classList.toggle('on', i===n); });
+  recalc();
+}
+
+// ─── Number formatting ───
+function sci(x, sig) {
+  if (!isFinite(x) || x === null || x === undefined) return '—';
+  sig = sig || 4;
+  const abs = Math.abs(x);
+  if (abs === 0) return '0';
+  if (abs >= 0.01 && abs < 100000) return String(parseFloat(x.toPrecision(sig)));
+  const exp  = Math.floor(Math.log10(abs));
+  const mant = parseFloat((x / Math.pow(10, exp)).toFixed(sig - 1));
+  return `${mant}·10<sup>${exp}</sup>`;
+}
+function sciTxt(x, sig) {
+  if (!isFinite(x) || x === null || x === undefined) return '—';
+  sig = sig || 4;
+  const abs = Math.abs(x);
+  if (abs === 0) return '0';
+  if (abs >= 0.01 && abs < 100000) return String(parseFloat(x.toPrecision(sig)));
+  const exp  = Math.floor(Math.log10(abs));
+  const mant = parseFloat((x / Math.pow(10, exp)).toFixed(sig - 1));
+  return `${mant}·10<sup>${exp}</sup>`;
+}
+// Plain text version for protocol (no HTML tags)
+function sciProto(x, sig) {
+  if (!isFinite(x) || x === null || x === undefined) return '—';
+  sig = sig || 4;
+  const abs = Math.abs(x);
+  if (abs === 0) return '0';
+  if (abs >= 0.01 && abs < 100000) return String(parseFloat(x.toPrecision(sig)));
+  const exp  = Math.floor(Math.log10(abs));
+  const mant = parseFloat((x / Math.pow(10, exp)).toFixed(sig - 1));
+  return `${mant}×10^${exp}`;
+}
+
+// ─── Get params ───
+function getP() {
+  const d_um  = parseFloat(document.getElementById('d_um').value)  || 0;
+  const dd_um = parseFloat(document.getElementById('dd_um').value) || 0;
+  const l_mm  = parseFloat(document.getElementById('l_mm').value)  || 0;
+  const dl_mm = parseFloat(document.getElementById('dl_mm').value) || 0;
+  const h_mm  = parseFloat(document.getElementById('h_mm').value)  || 0;
+  const dh_mm = parseFloat(document.getElementById('dh_mm').value) || 0;
+  const K     = parseFloat(document.getElementById('K_coef').value)  || 0;
+  const dK    = parseFloat(document.getElementById('dK_coef').value) || 0;
+  const I_mA  = parseFloat(document.getElementById('I_sample').value) || 0;
+  const dI_mA = parseFloat(document.getElementById('dI_sample').value) || 0;
+  const dV    = parseFloat(document.getElementById('dV_instr').value) || 0;
+  const dmV   = parseFloat(document.getElementById('dmV_instr').value) || 0;
+
+  const d  = d_um  * 1e-6;   // m
+  const dd = dd_um * 1e-6;
+  const l  = l_mm  * 1e-3;   // m
+  const dl = dl_mm * 1e-3;
+  const h  = h_mm  * 1e-3;   // m
+  const dh = dh_mm * 1e-3;
+  const S  = d * h;           // m²
+  // δS/S = √((δd/d)²+(δh/h)²)
+  const dS = S * Math.sqrt((d>0?dd/d:0)**2 + (h>0?dh/h:0)**2);
+  const I  = I_mA  * 1e-3;   // A
+  const dI = dI_mA * 1e-3;
+
+  return {d, dd, l, dl, h, dh, S, dS, K, dK, I, dI, dV, dmV: dmV*1e-3,
+          d_um, dd_um, l_mm, dl_mm, h_mm, dh_mm, I_mA, dI_mA};
+}
+
+// ─── Tabs ───
+function go(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + name).classList.add('on');
+  btn.classList.add('on');
+  recalc();
+}
+
+function s(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
+function st(id, t)   { const e = document.getElementById(id); if (e) e.textContent = t; }
+
+// ─── Init event listeners ───
+['d_um','dd_um','l_mm','dl_mm','h_mm','dh_mm','K_coef','dK_coef','I_sample','dI_sample','dV_instr','dmV_instr']
+  .forEach(id => document.getElementById(id).addEventListener('change', recalc));
+
+// ─── Build VAX table ───
+function buildVaxTable() {
+  document.getElementById('vaxBody').innerHTML = vaxRows.map((r, i) => `
+    <tr id="vr${i}">
+      <td class="rn">${i+1}</td>
+      <td><input type="number" min="0" step="any" id="vu${i}" value="${r.u}" placeholder="0.000" onchange="svr(${i},'u',this.value)"></td>
+      <td><input type="number" min="0" step="any" id="vi${i}" value="${r.i}" placeholder="0.00" onchange="svr(${i},'i',this.value)"></td>
+      <td id="vi_SI${i}" class="cv em">—</td>
+      <td><button class="del-btn" onclick="delVaxRow(${i})">×</button></td>
+    </tr>`).join('');
+}
+function svr(i, f, v) { vaxRows[i][f] = v; recalc(); }
+function addVaxRow() {
+  const i = vaxRows.length; vaxRows.push({u:'', i:''});
+  const tb = document.getElementById('vaxBody');
+  const tr = document.createElement('tr'); tr.id = `vr${i}`;
+  tr.innerHTML = `<td class="rn">${i+1}</td>
+    <td><input type="number" min="0" step="any" id="vu${i}" value="" placeholder="0.000" onchange="svr(${i},'u',this.value)"></td>
+    <td><input type="number" min="0" step="any" id="vi${i}" value="" placeholder="0.00" onchange="svr(${i},'i',this.value)"></td>
+    <td id="vi_SI${i}" class="cv em">—</td>
+    <td><button class="del-btn" onclick="delVaxRow(${i})">×</button></td>`;
+  tb.appendChild(tr); recalc();
+}
+function delVaxRow(i) { vaxRows.splice(i, 1); buildVaxTable(); recalc(); }
+
+// ─── Build Hall table ───
+function buildHallTable() {
+  const p = getP();
+  document.getElementById('hallBody').innerHTML = hallRows.map((r, i) => {
+    const im = r.im !== '' ? parseFloat(r.im) : null;
+    const B = (im !== null && p.K > 0) ? im * p.K : null;
+    return `
+    <tr id="hr${i}">
+      <td class="rn">${i+1}</td>
+      <td><input type="number" min="0" step="any" id="him${i}" value="${r.im}" placeholder="0.00" onchange="shr(${i},'im',this.value)"></td>
+      <td><input type="number" step="any" id="hup${i}" value="${r.u_perp}" placeholder="0.0" onchange="shr(${i},'u_perp',this.value)"></td>
+      <td id="hB${i}" class="cv em">${B !== null ? sci(B, 4) : '—'}</td>
+      <td id="hUV${i}" class="cv em">—</td>
+      <td><button class="del-btn" onclick="delHallRow(${i})">×</button></td>
+    </tr>`;
+  }).join('');
+}
+function shr(i, f, v) { hallRows[i][f] = v; recalc(); }
+function addHallRow() {
+  const i = hallRows.length; hallRows.push({im:'', u_perp:''});
+  const tb = document.getElementById('hallBody');
+  const tr = document.createElement('tr'); tr.id = `hr${i}`;
+  tr.innerHTML = `<td class="rn">${i+1}</td>
+    <td><input type="number" min="0" step="any" id="him${i}" value="" placeholder="0.00" onchange="shr(${i},'im',this.value)"></td>
+    <td><input type="number" step="any" id="hup${i}" value="" placeholder="0.0" onchange="shr(${i},'u_perp',this.value)"></td>
+    <td id="hB${i}" class="cv em">—</td>
+    <td id="hUV${i}" class="cv em">—</td>
+    <td><button class="del-btn" onclick="delHallRow(${i})">×</button></td>`;
+  tb.appendChild(tr); recalc();
+}
+function delHallRow(i) { hallRows.splice(i, 1); buildHallTable(); recalc(); }
+
+function setVaxTrim(n) {
+  vaxTrim = n;
+  [0,1,2].forEach(i => { const b = document.getElementById(`vax-trim-${i}`); if(b) b.classList.toggle('on', i===n); });
+  recalc();
+}
+function setHallTrim(n) {
+  hallTrim = n;
+  [0,1,2].forEach(i => { const b = document.getElementById(`hall-trim-${i}`); if(b) b.classList.toggle('on', i===n); });
+  recalc();
+}
+
+// ─── MNK (least squares) ───
+// Returns: {a, b, r2, sigA, s, n}  for y = a*x + b
+function mnk(pts) {
+  const n = pts.length;
+  if (n < 2) return null;
+  const sx  = pts.reduce((s,p) => s+p.x, 0);
+  const sy  = pts.reduce((s,p) => s+p.y, 0);
+  const sxx = pts.reduce((s,p) => s+p.x*p.x, 0);
+  const sxy = pts.reduce((s,p) => s+p.x*p.y, 0);
+  const D = n*sxx - sx*sx;
+  if (!D) return null;
+  const a = (n*sxy - sx*sy) / D;
+  const b = (sy - a*sx) / n;
+  const yM = sy/n, xM = sx/n;
+  const ssT = pts.reduce((s,p) => s+(p.y-yM)**2, 0);
+  const ssR = pts.reduce((s,p) => s+(p.y - a*p.x - b)**2, 0);
+  const r2  = ssT > 0 ? 1 - ssR/ssT : 1;
+  const s2  = n > 2 ? ssR/(n-2) : 0;
+  const s   = Math.sqrt(s2);
+  const sxxc = pts.reduce((s,p) => s+(p.x-xM)**2, 0);
+  const sigA = sxxc > 0 ? s/Math.sqrt(sxxc) : 0;
+  return {a, b, r2, sigA, s, n, ssR};
+}
+
+// ─── Student t-table P=0.90 ───
+const T_TABLE_90 = [NaN,6.314,2.920,2.353,2.132,2.015,1.943,1.895,1.860,1.833,1.812,1.796,1.782,1.771,1.761,1.753,1.746,1.740,1.734,1.729,1.725];
+function tStudent90(f) {
+  if (f <= 0) return NaN;
+  if (f < T_TABLE_90.length) return T_TABLE_90[f];
+  return 1.645;
+}
+
+// ─── Paired points method ───
+function pairedPoints(pts, trim) {
+  trim = trim || 0;
+  const working = pts.slice(trim);
+  if (working.length < 4) return null;
+  const n = working.length;
+  const k = Math.floor(n / 2);
+  const g1 = working.slice(0, k);
+  const g2 = working.slice(n - k);
+
+  const aPairs = [];
+  for (let i = 0; i < k; i++) {
+    const dx = g2[i].x - g1[i].x;
+    const dy = g2[i].y - g1[i].y;
+    const num1 = trim + i + 1;
+    const num2 = trim + (n - k) + i + 1;
+    if (Math.abs(dx) > 1e-20) {
+      aPairs.push({i: num1, j: num2, x1: g1[i].x, y1: g1[i].y, x2: g2[i].x, y2: g2[i].y, dx, dy, a: dy/dx});
+    }
+  }
+  if (aPairs.length < 2) return null;
+
+  const aMean = aPairs.reduce((s,p) => s+p.a, 0) / aPairs.length;
+  const sumSq = aPairs.reduce((s,p) => s+(p.a - aMean)**2, 0);
+  const sigmaA = Math.sqrt(sumSq / (aPairs.length * (aPairs.length-1)));
+  const f = aPairs.length - 1;
+  const t = tStudent90(f);
+  const deltaA = t * sigmaA;
+  const relDeltaA = aMean !== 0 ? deltaA / Math.abs(aMean) : 0;
+  const x1m = g1.reduce((s,p) => s+p.x, 0)/k, y1m = g1.reduce((s,p) => s+p.y, 0)/k;
+  const x2m = g2.reduce((s,p) => s+p.x, 0)/k, y2m = g2.reduce((s,p) => s+p.y, 0)/k;
+  return {g1, g2, k, n, trim, aPairs, aMean, sumSq, sigmaA, f, t, deltaA, relDeltaA, x1: x1m, y1: y1m, x2: x2m, y2: y2m, a: aMean, half: k};
+}
+
+// ─── Chart helpers ───
+function niceStep(range, targetTicks) {
+  if (!range || range <= 0) return 1;
+  const raw = range / targetTicks;
+  const exp = Math.floor(Math.log10(raw));
+  const p   = Math.pow(10, exp);
+  const m   = raw / p;
+  if (m <= 1)      return 1 * p;
+  else if (m <= 2) return 2 * p;
+  else if (m <= 5) return 5 * p;
+  else             return 10 * p;
+}
+function fmtTick(v) {
+  if (v === 0) return '0';
+  const abs = Math.abs(v);
+  if (abs >= 0.001 && abs < 10000) return String(parseFloat(v.toPrecision(4)));
+  const exp = Math.floor(Math.log10(abs));
+  const mant = parseFloat((v / Math.pow(10, exp)).toFixed(2));
+  const supMap = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  return `${mant}·10${String(exp).split('').map(c => supMap[c]||c).join('')}`;
+}
+
+function initCharts() {
+  const baseOpts = (xl, yl) => ({
+    responsive: true, maintainAspectRatio: false,
+    layout: {padding: {top:16, right:24, bottom:12, left:10}},
+    plugins: {
+      legend: {display: true, position: 'top', labels: {font: {family:"'DM Sans', sans-serif", size:11}, color:'#3a5048', boxWidth:16, padding:14}},
+      tooltip: {
+        callbacks: {label: c => `(${sciProto(c.parsed.x,4)}, ${sciProto(c.parsed.y,4)})`},
+        backgroundColor:'rgba(16,44,38,0.92)',
+        titleFont:{family:"'DM Sans',sans-serif",size:11},
+        bodyFont:{family:"'DM Mono',monospace",size:11},
+        padding:9, cornerRadius:5,
+        titleColor:'rgba(247,231,206,0.7)',
+        bodyColor:'#F7E7CE',
+        borderColor:'rgba(247,231,206,0.15)',
+        borderWidth:1
+      }
+    },
+    scales: {
+      x: {title:{display:true,text:xl,font:{family:"'DM Sans',sans-serif",size:12,weight:'600'},color:'#3a5048',padding:{top:8}},
+          grid:{color:'rgba(16,44,38,0.07)'},ticks:{font:{family:"'DM Mono',monospace",size:10},color:'#3a5048',maxRotation:0,callback:v=>fmtTick(v)},border:{color:'#3a5048',width:1.5}},
+      y: {title:{display:true,text:yl,font:{family:"'DM Sans',sans-serif",size:12,weight:'600'},color:'#3a5048',padding:{bottom:8}},
+          grid:{color:'rgba(16,44,38,0.07)'},ticks:{font:{family:"'DM Mono',monospace",size:10},color:'#3a5048',callback:v=>fmtTick(v)},border:{color:'#3a5048',width:1.5}}
+    }
+  });
+  vaxChart  = new Chart(document.getElementById('vaxChart').getContext('2d'),  {type:'scatter', data:{datasets:[]}, options: baseOpts('U‖, В', 'I, А')});
+  hallChart = new Chart(document.getElementById('hallChart').getContext('2d'), {type:'scatter', data:{datasets:[]}, options: baseOpts('B, Тл', 'U⊥, В')});
+}
+
+function forcedStep(range, multiplier) {
+  if (!range || range <= 0) return 1;
+  const raw = range / 7;
+  const exp = Math.floor(Math.log10(raw));
+  const p   = Math.pow(10, exp);
+  let step = multiplier * p;
+  if (range / step < 3) step = step / 2;
+  return step;
+}
+
+function updChart(chart, pts, reg, pp, xLabel, yLabel, scaleMode) {
+  scaleMode = scaleMode || 'auto';
+  const ds = [];
+  if (pts.length > 0) ds.push({
+    label:'Измерения', data: pts,
+    backgroundColor:'#102C26', borderColor:'#102C26',
+    pointRadius:6, pointHoverRadius:9, type:'scatter'
+  });
+  if (reg && pts.length >= 2) {
+    const xs = pts.map(p=>p.x);
+    const xMin2 = Math.min(0, Math.min(...xs));
+    const xMax2 = Math.max(...xs) * 1.1;
+    ds.push({
+      label:`МНК: y=${sciProto(reg.a,4)}·x+(${sciProto(reg.b,4)})  R²=${reg.r2.toFixed(4)}`,
+      data:[{x:xMin2,y:reg.a*xMin2+reg.b},{x:xMax2,y:reg.a*xMax2+reg.b}],
+      type:'line', borderColor:'#8b2e1a', borderWidth:2, pointRadius:0, tension:0
+    });
+  }
+  if (pp) ds.push({
+    label:`Парные: a=${sciProto(pp.a,4)}`,
+    data:[{x:pp.x1,y:pp.y1},{x:pp.x2,y:pp.y2}],
+    type:'line', borderColor:'#8a6020', borderWidth:1.5, borderDash:[5,4],
+    pointRadius:8, pointStyle:'crossRot', backgroundColor:'#8a6020', pointBorderWidth:2
+  });
+  chart.data.datasets = ds;
+
+  if (pts.length > 0) {
+    const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+    const xMax = Math.max(...xs) * 1.12;
+    const yMax = reg
+      ? Math.max(Math.max(...ys), reg.a * xMax + reg.b) * 1.12
+      : Math.max(...ys) * 1.12;
+
+    let xStep, yStep;
+    if (scaleMode === 'auto') {
+      xStep = niceStep(xMax, 6);
+      yStep = niceStep(yMax, 6);
+    } else {
+      const m = parseFloat(scaleMode);
+      xStep = forcedStep(xMax, m);
+      yStep = forcedStep(yMax, m);
+    }
+
+    chart.options.scales.x.min = 0;
+    chart.options.scales.x.max = Math.ceil(xMax / xStep) * xStep;
+    chart.options.scales.x.ticks.stepSize = xStep;
+    chart.options.scales.y.min = 0;
+    chart.options.scales.y.max = Math.ceil(yMax / yStep) * yStep;
+    chart.options.scales.y.ticks.stepSize = yStep;
+  } else {
+    ['x','y'].forEach(ax => {
+      delete chart.options.scales[ax].min;
+      delete chart.options.scales[ax].max;
+      delete chart.options.scales[ax].ticks.stepSize;
+    });
+  }
+  chart.update();
+}
+
+// ─── Render paired points table ───
+function renderPairedTable(containerId, pp) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!pp) { el.innerHTML='<div class="notice warn"><span>!</span><span>Нужно не менее 4 точек.</span></div>'; return; }
+  let html = `<div class="tbl-wrap"><table class="dt"><thead><tr>
+    <th>Пара</th><th>x₁</th><th>y₁</th><th>x₂</th><th>y₂</th>
+    <th>Δx</th><th>Δy</th><th>aᵢ</th><th>(aᵢ−⟨a⟩)²</th>
+    </tr></thead><tbody>`;
+  pp.aPairs.forEach(p => {
+    const dev2 = (p.a - pp.aMean)**2;
+    html += `<tr>
+      <td class="cv rn">${p.i} и ${p.j}</td>
+      <td class="cv">${sci(p.x1,5)}</td><td class="cv">${sci(p.y1,5)}</td>
+      <td class="cv">${sci(p.x2,5)}</td><td class="cv">${sci(p.y2,5)}</td>
+      <td class="cv">${sci(p.dx,5)}</td><td class="cv">${sci(p.dy,5)}</td>
+      <td class="cv" style="font-weight:600;color:var(--navy)">${sci(p.a,5)}</td>
+      <td class="cv">${sci(dev2,5)}</td>
+    </tr>`;
+  });
+  html += `<tr style="background:var(--warn-bg)">
+    <td class="cv" colspan="7" style="font-weight:600;color:var(--gold)">Итого</td>
+    <td class="cv" style="color:var(--navy);font-weight:600">⟨a⟩ = ${sci(pp.aMean,5)}</td>
+    <td class="cv" style="color:var(--gold);font-weight:600">Σ = ${sci(pp.sumSq,5)}</td>
+  </tr>`;
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+// ─── Render paired err lines ───
+function renderPpErrLines(containerId, pp) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!pp) { el.innerHTML = ''; return; }
+  const lines = [
+    `k = ${pp.k} пар,  f = k−1 = ${pp.f} (степени свободы)`,
+    `σ⟨a⟩ = √(Σ(aᵢ−⟨a⟩)² / (k·(k−1))) = √(${sciTxt(pp.sumSq,4)} / ${pp.k*pp.f}) = ${sciTxt(pp.sigmaA,5)}`,
+    `t(0.90; ${pp.f}) = ${pp.t.toFixed(3)}`,
+    `Δa = t · σ⟨a⟩ = ${pp.t.toFixed(3)} · ${sciTxt(pp.sigmaA,5)} = ${sciTxt(pp.deltaA,5)}`,
+    `δa = Δa/⟨a⟩ = ${(pp.relDeltaA*100).toFixed(1)} %`,
+  ];
+  el.innerHTML = lines.map(l => `<div class="rline"><div class="rk" style="min-width:auto">${l}</div></div>`).join('');
+}
+
+// ─── TABLE 3: σ by paired points (like методичка Табл.3) ───
+function buildTable3(p) {
+  const tbody = document.getElementById('t3-body');
+  const tfoot = document.getElementById('t3-foot');
+  if (!tbody || !tfoot) return;
+
+  // Collect valid VAX points: {u (V), i (A), idx}
+  const pts = vaxRows
+    .map((r, idx) => ({u: parseFloat(r.u), i: parseFloat(r.i)*1e-3, idx: idx+1}))
+    .filter(r => isFinite(r.u) && r.u > 0 && isFinite(r.i));
+
+  const lS = (p.l > 0 && p.S > 0) ? p.l / p.S : null;
+
+  // Info line
+  s('t3-info', lS !== null
+    ? `l/S = ${sci(lS,4)} м⁻¹  ·  Размеры: l = ${sci(p.l,4)} м, S = ${sci(p.S,4)} м², h = ${sci(p.h,4)} м, d = ${sci(p.d,4)} м`
+    : 'Заполните параметры образца на вкладке «Параметры».');
+
+  if (pts.length < 4 || !lS) {
+    tbody.innerHTML = `<tr><td colspan="8" class="cv em" style="padding:16px">Нужно не менее 4 точек в Табл.1</td></tr>`;
+    tfoot.innerHTML = '';
+    s('t3-formula','—'); s('t3-sigma','⟨σ⟩ = —');
+    document.getElementById('t3-err-lines').innerHTML = '';
+    return;
+  }
+
+  const working = pts.slice(t3Trim);
+  const n = working.length;
+  const k = Math.floor(n / 2);
+  const g1 = working.slice(0, k);
+  const g2 = working.slice(n - k);
+
+  // σ_i = (ΔI/ΔU) * l/S
+  const sigmaRows = [];
+  for (let i = 0; i < k; i++) {
+    const dU = g2[i].u - g1[i].u;
+    const dI = g2[i].i - g1[i].i;
+    if (Math.abs(dU) > 1e-12) {
+      sigmaRows.push({
+        idx1: g1[i].idx, idx2: g2[i].idx,
+        i1: g1[i].i * 1e3, u1: g1[i].u,
+        i2: g2[i].i * 1e3, u2: g2[i].u,
+        sigma: (dI / dU) * lS
+      });
+    }
+  }
+
+  if (sigmaRows.length < 2) {
+    tbody.innerHTML = `<tr><td colspan="8" class="cv em" style="padding:16px">Недостаточно данных для пар</td></tr>`;
+    tfoot.innerHTML = ''; return;
+  }
+
+  const sMean = sigmaRows.reduce((s,r) => s + r.sigma, 0) / sigmaRows.length;
+  const sumSq = sigmaRows.reduce((s,r) => s + (r.sigma - sMean)**2, 0);
+  const sigmaA_s = Math.sqrt(sumSq / (sigmaRows.length * (sigmaRows.length - 1)));
+  const f_s = sigmaRows.length - 1;
+  const t_s = tStudent90(f_s);
+  const deltaS = t_s * sigmaA_s;
+  const relS_pp = sMean !== 0 ? deltaS / Math.abs(sMean) : 0;
+
+  // Render body
+  tbody.innerHTML = sigmaRows.map(r => {
+    const dev   = r.sigma - sMean;
+    const dev2  = dev**2;
+    return `<tr>
+      <td class="rn" style="font-family:var(--mono);font-size:11px;color:var(--ink3);padding:8px 12px">${r.idx1} и ${r.idx2}</td>
+      <td class="cv">${r.i1.toFixed(2)}</td>
+      <td class="cv">${sci(r.u1,5)}</td>
+      <td class="cv">${r.i2.toFixed(2)}</td>
+      <td class="cv">${sci(r.u2,5)}</td>
+      <td class="cv" style="font-weight:600;color:var(--navy)">${sci(r.sigma,5)}</td>
+      <td class="cv">${sci(dev,4)}</td>
+      <td class="cv">${sci(dev2,4)}</td>
+    </tr>`;
+  }).join('');
+
+  // Footer
+  tfoot.innerHTML = `<tr style="background:rgba(16,44,38,0.06)">
+    <td colspan="5" class="cv" style="font-weight:700;color:var(--ink2);padding:10px 14px;text-align:right">
+      ⟨σ⟩ = ${sci(sMean,5)} (Ом·м)⁻¹
+    </td>
+    <td class="cv" style="font-weight:700;color:var(--navy)">${sci(sMean,5)}</td>
+    <td colspan="2" class="cv" style="color:var(--gold);font-weight:600">Σ = ${sci(sumSq,5)}</td>
+  </tr>`;
+
+  // Result block
+  s('t3-formula',
+    `σ_i = (ΔI/ΔU) · (l/S), &nbsp; l/S = ${sci(lS,4)} м⁻¹<br>` +
+    `σ⟨a⟩ = √(Σ(σᵢ−⟨σ⟩)² / (k·(k−1))) = ${sci(sigmaA_s,4)}<br>` +
+    `t(0.90; ${f_s}) = ${t_s.toFixed(3)}, &nbsp; Δσ = t·σ⟨a⟩ = ${sci(deltaS,4)}`
+  );
+  s('t3-sigma', `⟨σ⟩ = ${sci(sMean,5)} (Ом·м)⁻¹`);
+
+  const errLines = [
+    `k = ${sigmaRows.length} пар,  f = k−1 = ${f_s}`,
+    `⟨σ⟩ = ${sci(sMean,5)} (Ом·м)⁻¹`,
+    `σ⟨σ⟩ = √(Σ(σᵢ−⟨σ⟩)² / (k·(k−1))) = √(${sci(sumSq,4)} / ${sigmaRows.length * f_s}) = ${sci(sigmaA_s,5)}`,
+    `t(0.90; ${f_s}) = ${t_s.toFixed(3)}`,
+    `Δσ = t · σ⟨σ⟩ = ${t_s.toFixed(3)} · ${sci(sigmaA_s,5)} = ${sci(deltaS,5)}`,
+    `δσ = Δσ/⟨σ⟩ = ${(relS_pp*100).toFixed(2)} %`,
+    `<strong>σ = (${sci(sMean,4)} ± ${sci(deltaS,4)}) (Ом·м)⁻¹</strong>`,
+  ];
+  document.getElementById('t3-err-lines').innerHTML =
+    errLines.map(l => `<div class="rline"><div class="rk" style="min-width:auto;color:var(--ink)">${l}</div></div>`).join('');
+}
+
+// ─── TABLE 4: R by paired points (like методичка Табл.4) ───
+function buildTable4(p) {
+  const tbody = document.getElementById('t4-body');
+  const tfoot = document.getElementById('t4-foot');
+  if (!tbody || !tfoot) return;
+
+  // Collect valid Hall points: {B (T), uPerp (V), im (A), idx}
+  const pts = hallRows
+    .map((r, idx) => ({
+      im: parseFloat(r.im),
+      B:  parseFloat(r.im) * p.K,
+      uP: parseFloat(r.u_perp) * 1e-3,
+      uP_mV: parseFloat(r.u_perp),
+      idx: idx+1
+    }))
+    .filter(r => isFinite(r.im) && r.im > 0 && isFinite(r.uP));
+
+  const dI_ratio = (p.d > 0 && p.I > 0) ? p.d / p.I : null;
+
+  s('t4-info', dI_ratio !== null
+    ? `d/I = ${sci(p.d,4)} / ${sci(p.I,4)} = ${sci(dI_ratio,4)} м/А  ·  I = ${p.I_mA} мА, d = ${p.d_um} мкм, K = ${p.K} Тл/А`
+    : 'Заполните параметры на вкладке «Параметры».');
+
+  if (pts.length < 4 || !dI_ratio) {
+    tbody.innerHTML = `<tr><td colspan="8" class="cv em" style="padding:16px">Нужно не менее 4 точек в Табл.2</td></tr>`;
+    tfoot.innerHTML = '';
+    s('t4-formula','—'); s('t4-R','⟨R⟩ = —'); s('t4-R-big','—');
+    document.getElementById('t4-err-lines').innerHTML = '';
+    return;
+  }
+
+  const working = pts.slice(t4Trim);
+  const n = working.length;
+  const k = Math.floor(n / 2);
+  const g1 = working.slice(0, k);
+  const g2 = working.slice(n - k);
+
+  // R_i = (ΔU⊥/ΔB) * d/I
+  const rRows = [];
+  for (let i = 0; i < k; i++) {
+    const dB  = g2[i].B  - g1[i].B;
+    const dU  = g2[i].uP - g1[i].uP;
+    if (Math.abs(dB) > 1e-12) {
+      rRows.push({
+        idx1: g1[i].idx, idx2: g2[i].idx,
+        im1: g1[i].im, uP1_mV: g1[i].uP_mV,
+        im2: g2[i].im, uP2_mV: g2[i].uP_mV,
+        R: (dU / dB) * dI_ratio
+      });
+    }
+  }
+
+  if (rRows.length < 2) {
+    tbody.innerHTML = `<tr><td colspan="8" class="cv em" style="padding:16px">Недостаточно данных для пар</td></tr>`;
+    tfoot.innerHTML = ''; return;
+  }
+
+  const rMean = rRows.reduce((s,r) => s + r.R, 0) / rRows.length;
+  const sumSq = rRows.reduce((s,r) => s + (r.R - rMean)**2, 0);
+  const sigmaA_r = Math.sqrt(sumSq / (rRows.length * (rRows.length - 1)));
+  const f_r = rRows.length - 1;
+  const t_r = tStudent90(f_r);
+  const deltaR = t_r * sigmaA_r;
+  const relR_pp = rMean !== 0 ? deltaR / Math.abs(rMean) : 0;
+
+  // Render body
+  tbody.innerHTML = rRows.map(r => {
+    const dev  = r.R - rMean;
+    const dev2 = dev**2;
+    return `<tr>
+      <td class="rn" style="font-family:var(--mono);font-size:11px;color:var(--ink3);padding:8px 12px">${r.idx1} и ${r.idx2}</td>
+      <td class="cv">${r.im1.toFixed(2)}</td>
+      <td class="cv">${r.uP1_mV.toFixed(1)}</td>
+      <td class="cv">${r.im2.toFixed(2)}</td>
+      <td class="cv">${r.uP2_mV.toFixed(1)}</td>
+      <td class="cv" style="font-weight:600;color:var(--navy)">${sci(r.R,5)}</td>
+      <td class="cv">${sci(dev,4)}</td>
+      <td class="cv">${sci(dev2,4)}</td>
+    </tr>`;
+  }).join('');
+
+  // Footer
+  tfoot.innerHTML = `<tr style="background:rgba(16,44,38,0.06)">
+    <td colspan="5" class="cv" style="font-weight:700;color:var(--ink2);padding:10px 14px;text-align:right">
+      ⟨R⟩ = ${sci(rMean,5)} м³/Кл
+    </td>
+    <td class="cv" style="font-weight:700;color:var(--navy)">${sci(rMean,5)}</td>
+    <td colspan="2" class="cv" style="color:var(--gold);font-weight:600">Σ = ${sci(sumSq,5)}</td>
+  </tr>`;
+
+  // Result block
+  s('t4-formula',
+    `R_i = (ΔU⊥/ΔB) · (d/I), &nbsp; d/I = ${sci(dI_ratio,4)} м/А<br>` +
+    `σ⟨R⟩ = √(Σ(Rᵢ−⟨R⟩)² / (k·(k−1))) = ${sci(sigmaA_r,4)}<br>` +
+    `t(0.90; ${f_r}) = ${t_r.toFixed(3)}, &nbsp; ΔR = t·σ⟨R⟩ = ${sci(deltaR,4)}`
+  );
+  s('t4-R', `⟨R⟩ = ${sci(rMean,5)} м³/Кл`);
+  s('t4-R-big', `${sci(rMean,4)} <span class="u2">м³/Кл</span>`);
+
+  const errLines = [
+    `k = ${rRows.length} пар,  f = k−1 = ${f_r}`,
+    `⟨R⟩ = ${sci(rMean,5)} м³/Кл`,
+    `σ⟨R⟩ = √(Σ(Rᵢ−⟨R⟩)² / (k·(k−1))) = √(${sci(sumSq,4)} / ${rRows.length * f_r}) = ${sci(sigmaA_r,5)}`,
+    `t(0.90; ${f_r}) = ${t_r.toFixed(3)}`,
+    `ΔR = t · σ⟨R⟩ = ${t_r.toFixed(3)} · ${sci(sigmaA_r,5)} = ${sci(deltaR,5)}`,
+    `δR = ΔR/|⟨R⟩| = ${(relR_pp*100).toFixed(2)} %`,
+    `<strong>R = (${sci(Math.abs(rMean),4)} ± ${sci(deltaR,4)}) м³/Кл</strong>`,
+  ];
+  document.getElementById('t4-err-lines').innerHTML =
+    errLines.map(l => `<div class="rline"><div class="rk" style="min-width:auto;color:var(--ink)">${l}</div></div>`).join('');
+}
+
+// ─── MAIN RECALC ───
+function recalc() {
+  const p = getP();
+
+  // Build Табл. 3 & 4
+  buildTable3(p);
+  buildTable4(p);
+
+  // Update param display
+  s('S-val',  p.S > 0 ? sciTxt(p.S, 4)  : '⚠');
+  s('lS-val', p.S > 0 && p.l > 0 ? sciTxt(p.l/p.S, 4) : '⚠');
+  s('hall-I-label', p.I_mA);
+  s('hall-info', `K = ${p.K} Тл/А &nbsp;·&nbsp; I = ${p.I_mA} мА = ${sciTxt(p.I,4)} А &nbsp;·&nbsp; d = ${p.d_um} мкм = ${sciTxt(p.d,4)} м`);
+
+  // Params table
+  const ptb = document.getElementById('pt-body');
+  if (ptb) ptb.innerHTML = [
+    ['d',   sci(p.d,4),    'м',    `(${p.d_um} мкм)`],
+    ['Δd',  sci(p.dd,4),   'м',    `(${p.dd_um} мкм)`],
+    ['l',   sci(p.l,4),    'м',    `(${p.l_mm} мм)`],
+    ['Δl',  sci(p.dl,4),   'м',    `(${p.dl_mm} мм)`],
+    ['h',   sci(p.h,4),    'м',    `(${p.h_mm} мм)`],
+    ['Δh',  sci(p.dh,4),   'м',    `(${p.dh_mm} мм)`],
+    ['S',   sci(p.S,4),    'м²',   '= d·h'],
+    ['ΔS',  sci(p.dS,4),   'м²',   `δS = ${p.S>0?(p.dS/p.S*100).toFixed(1):'-'} %`],
+    ['l/S', sci(p.l/p.S,4),'м⁻¹', ''],
+    ['K',   p.K,           'Тл/А', `ΔK = ${p.dK} Тл/А`],
+    ['I',   sci(p.I,4),    'А',    `(${p.I_mA} мА, ΔI = ${p.dI_mA} мА)`],
+  ].map(([k,v,u,note]) => `<tr><td>${k}</td><td>${v}</td><td>${u}</td><td style="color:var(--ink3);font-size:11px;text-align:right;padding-right:16px">${note||''}</td></tr>`).join('');
+
+  // Update Hall table B column
+  hallRows.forEach((r,i) => {
+    const im = r.im !== '' ? parseFloat(r.im) : null;
+    const B  = (im !== null && p.K > 0) ? im * p.K : null;
+    const uv = r.u_perp !== '' ? parseFloat(r.u_perp) * 1e-3 : null; // mV → V
+    const hB = document.getElementById(`hB${i}`);
+    const hUV= document.getElementById(`hUV${i}`);
+    if (hB)  hB.innerHTML  = B  !== null ? sci(B,  4) : '—';
+    if (hUV) hUV.innerHTML = uv !== null ? sci(uv, 4) : '—';
+  });
+
+  // Update VAX SI column
+  vaxRows.forEach((r,i) => {
+    const I_A = r.i !== '' ? parseFloat(r.i) * 1e-3 : null;
+    const el  = document.getElementById(`vi_SI${i}`);
+    if (el) el.innerHTML = I_A !== null ? sci(I_A, 4) : '—';
+  });
+
+  // ─── VAX points ───
+  const vaxPts = vaxRows
+    .filter(r => r.u !== '' && r.i !== '' && parseFloat(r.u) > 0)
+    .map(r => ({x: parseFloat(r.u), y: parseFloat(r.i) * 1e-3}))
+    .filter(pt => isFinite(pt.x) && isFinite(pt.y));
+
+  const vaxReg = mnk(vaxPts);
+  const vaxPP  = pairedPoints(vaxPts, vaxTrim);
+
+  // ─── Hall points ───
+  const hallPts = hallRows
+    .filter(r => r.im !== '' && r.u_perp !== '' && parseFloat(r.im) > 0)
+    .map(r => ({x: parseFloat(r.im) * p.K, y: parseFloat(r.u_perp) * 1e-3}))
+    .filter(pt => isFinite(pt.x) && isFinite(pt.y));
+
+  const hallReg = mnk(hallPts);
+  const hallPP  = pairedPoints(hallPts, hallTrim);
+
+  // ─── VAX checks ───
+  const vaxChecks = document.getElementById('vax-checks');
+  if (vaxChecks) vaxChecks.innerHTML = [
+    [vaxPts.length >= 8, `${vaxPts.length} строк (рекомендуется ≥ 8)`, 'Количество измерений ВАХ'],
+    [vaxReg !== null, vaxReg ? `R² = ${vaxReg.r2.toFixed(4)}` : 'мало точек', 'Линейность ВАХ (МНК)'],
+    [p.S > 0, p.S > 0 ? `S = ${sciTxt(p.S,4)} м²` : 'проверьте d и h', 'Площадь сечения S'],
+  ].map(([ok, d, lbl]) => `<div class="chk ${ok?'ok':'bad'}"><span class="chk-icon">${ok?'✓':'!'}</span><span><strong>${lbl}</strong> — ${d}</span></div>`).join('');
+
+  // ─── Hall checks ───
+  const hallChecksEl = document.getElementById('hall-checks');
+  if (hallChecksEl) hallChecksEl.innerHTML = [
+    [hallPts.length >= 6, `${hallPts.length} строк (рекомендуется ≥ 6)`, 'Количество измерений ХЭДС'],
+    [hallReg !== null, hallReg ? `R² = ${hallReg.r2.toFixed(4)}` : 'мало точек', 'Линейность U⊥(B) (МНК)'],
+    [p.I > 0, p.I > 0 ? `I = ${sciTxt(p.I,4)} А` : 'введите ток образца', 'Ток образца'],
+    [p.K > 0, p.K > 0 ? `K = ${p.K} Тл/А` : 'введите K', 'Коэффициент электромагнита K'],
+  ].map(([ok, d, lbl]) => `<div class="chk ${ok?'ok':'bad'}"><span class="chk-icon">${ok?'✓':'!'}</span><span><strong>${lbl}</strong> — ${d}</span></div>`).join('');
+
+  // ─── Update charts ───
+  updChart(vaxChart,  vaxPts,  vaxReg,  vaxPP,  'U‖, В', 'I, А',    scaleModeVax);
+  updChart(hallChart, hallPts, hallReg, hallPP, 'B, Тл', 'U⊥, В', scaleModeHall);
+
+  // ─── VAX MNK chips ───
+  if (vaxReg) {
+    s('vax-eq', `I = ${sci(vaxReg.a,4)}·U + (${sci(vaxReg.b,4)})`);
+    s('vax-a',  sci(vaxReg.a, 4));
+    s('vax-r2', vaxReg.r2.toFixed(5));
+    const sigma_mnk = p.S > 0 && p.l > 0 ? vaxReg.a * (p.l / p.S) : null;
+    s('vax-sigma-mnk', sigma_mnk !== null ? sci(sigma_mnk,4) : '—');
+  } else {
+    ['vax-eq','vax-a','vax-r2','vax-sigma-mnk'].forEach(id => st(id,'—'));
+  }
+
+  // ─── Hall MNK chips ───
+  if (hallReg) {
+    s('hall-eq', `U⊥ = ${sci(hallReg.a,4)}·B + (${sci(hallReg.b,4)})`);
+    s('hall-a',  sci(hallReg.a, 4));
+    s('hall-r2', hallReg.r2.toFixed(5));
+    s('hall-n',  hallReg.n);
+  } else {
+    ['hall-eq','hall-a','hall-r2','hall-n'].forEach(id => st(id,'—'));
+  }
+
+  // ─── VAX paired points ───
+  renderPairedTable('vax-paired-table', vaxPP);
+  renderPpErrLines('vax-pp-err-lines', vaxPP);
+
+  let sigma = null, relSigma = 0, delta_sigma_rel = 0;
+  if (vaxPP && p.S > 0 && p.l > 0) {
+    sigma = vaxPP.aMean * (p.l / p.S);
+    relSigma = vaxPP.relDeltaA;
+    s('vax-pp-eq', `⟨a⟩ = ${sci(vaxPP.aMean,5)} А/В,  σ = ⟨a⟩·(l/S) = ${sci(vaxPP.aMean,4)} × ${sci(p.l/p.S,4)}`);
+    s('vax-pp-sigma', `σ = ${sci(sigma,4)} (Ом·м)⁻¹`);
+    s('sigma-big', `${sci(sigma,4)} <span class="u2">(Ом·м)⁻¹</span>`);
+  } else if (vaxReg && p.S > 0 && p.l > 0) {
+    sigma = vaxReg.a * (p.l / p.S);
+    relSigma = vaxReg.sigA / vaxReg.a;
+    s('vax-pp-eq', '—');
+    s('vax-pp-sigma', `σ = ${sci(sigma,4)} (Ом·м)⁻¹ (из МНК)`);
+    s('sigma-big', `${sci(sigma,4)} <span class="u2">(Ом·м)⁻¹</span>`);
+  } else {
+    s('vax-pp-eq','—'); s('vax-pp-sigma','σ = —'); s('sigma-big','—');
+  }
+
+  // ─── Hall paired points ───
+  renderPairedTable('hall-paired-table', hallPP);
+  renderPpErrLines('hall-pp-err-lines', hallPP);
+
+  let R_hall = null, relR = 0, aHall = null;
+  if (hallPP && p.I > 0 && p.d > 0) {
+    aHall  = hallPP.aMean;  // V/T
+    R_hall = aHall * p.d / p.I;
+    relR   = hallPP.relDeltaA;
+    s('hall-pp-eq', `⟨a⟩ = ${sci(aHall,5)} В/Тл,  R = ⟨a⟩·d/I = ${sci(aHall,4)} × ${sciTxt(p.d,4)} / ${sciTxt(p.I,4)}`);
+    s('hall-pp-R', `R = ${sci(R_hall,4)} м³/Кл`);
+    s('R-big', `${sci(R_hall,4)} <span class="u2">м³/Кл</span>`);
+  } else if (hallReg && p.I > 0 && p.d > 0) {
+    aHall  = hallReg.a;
+    R_hall = aHall * p.d / p.I;
+    relR   = hallReg.sigA / hallReg.a;
+    s('hall-pp-eq','—');
+    s('hall-pp-R', `R = ${sci(R_hall,4)} м³/Кл (из МНК)`);
+    s('R-big', `${sci(R_hall,4)} <span class="u2">м³/Кл</span>`);
+  } else {
+    s('hall-pp-eq','—'); s('hall-pp-R','R = —'); s('R-big','—');
+  }
+
+  // ─── n and μ ───
+  let n_carriers = null, mu_carriers = null;
+  if (R_hall !== null) {
+    n_carriers = 1 / (ECH * Math.abs(R_hall));
+    s('n-sub', `1 / (1.6·10⁻¹⁹ × ${sci(Math.abs(R_hall),4)}) = ${sci(n_carriers,4)}`);
+    s('n-res', `n = ${sci(n_carriers,4)} м⁻³ &nbsp;=&nbsp; ${sci(n_carriers*1e-6,4)} см⁻³`);
+  } else {
+    s('n-sub','—'); s('n-res','n = —');
+  }
+  if (sigma !== null && R_hall !== null) {
+    mu_carriers = sigma * Math.abs(R_hall);
+    s('mu-sub', `${sci(sigma,4)} × ${sci(Math.abs(R_hall),4)} = ${sci(mu_carriers,4)}`);
+    s('mu-res', `μ = ${sci(mu_carriers,4)} м²/(В·с) &nbsp;=&nbsp; ${sci(mu_carriers*1e4,4)} см²/(В·с)`);
+  } else {
+    s('mu-sub','—'); s('mu-res','μ = —');
+  }
+
+  // ─── Error budget ───
+  const relD  = p.d > 0 ? p.dd / p.d : 0;
+  const relL  = p.l > 0 ? p.dl / p.l : 0;
+  const relS  = p.S > 0 ? p.dS / p.S : 0;
+  const relI  = p.I > 0 ? p.dI / p.I : 0;
+  const relA_hall = relR; // from paired points (ХЭДС)
+
+  // δR = sqrt(δa² + δd² + δI²)
+  const delta_R_rel  = Math.sqrt(relA_hall**2 + relD**2 + relI**2);
+  // δσ = √(δa_vax² + (δl/l)² + (δS/S)²)
+  const relA_vax = vaxPP ? vaxPP.relDeltaA : (vaxReg ? vaxReg.sigA/vaxReg.a : 0);
+  delta_sigma_rel = Math.sqrt(relA_vax**2 + relL**2 + relS**2);
+  const delta_n_rel  = delta_R_rel;
+  const delta_mu_rel = R_hall !== null && sigma !== null ? Math.sqrt(delta_sigma_rel**2 + delta_R_rel**2) : 0;
+
+  const delta_R     = R_hall      ? delta_R_rel     * Math.abs(R_hall) : null;
+  const delta_sigma = sigma       ? delta_sigma_rel * sigma            : null;
+  const delta_n     = n_carriers  ? delta_n_rel     * n_carriers       : null;
+  const delta_mu    = mu_carriers ? delta_mu_rel    * mu_carriers      : null;
+
+  const errRows = [
+    ['⟨a⟩ из парных точек (ХЭДС)', hallPP ? sci(hallPP.aMean,5) : '—', 'В/Тл'],
+    ['δa = Δa/⟨a⟩', hallPP ? (hallPP.relDeltaA*100).toFixed(2)+' %' : '—', ''],
+    ['─','',''],
+    ['δd = Δd/d', (relD*100).toFixed(2)+' %', `Δd = ${sci(p.dd,3)} м`],
+    ['δI = ΔI/I', (relI*100).toFixed(2)+' %', `ΔI = ${sci(p.dI,3)} А`],
+    ['─','',''],
+    ['δR = √(δa²+δd²+δI²)', (delta_R_rel*100).toFixed(2)+' %', ''],
+    delta_R !== null ? ['ΔR = δR·|R|', sci(delta_R,4)+' м³/Кл', ''] : null,
+    R_hall  !== null ? ['R ± ΔR', `(${sci(Math.abs(R_hall),4)} ± ${delta_R?sci(delta_R,4):'?'}) м³/Кл`, '— РЕЗУЛЬТАТ'] : null,
+    ['─','',''],
+    ['⟨a⟩ из парных точек (ВАХ)', vaxPP ? sci(vaxPP.aMean,5) : '—', 'А/В'],
+    ['δa (ВАХ, пар. точки)', vaxPP ? (vaxPP.relDeltaA*100).toFixed(2)+' %' : '—', ''],
+    ['δl = Δl/l', (relL*100).toFixed(2)+' %', `Δl = ${sci(p.dl,3)} м`],
+    ['δS = ΔS/S', (relS*100).toFixed(2)+' %', `ΔS = ${sci(p.dS,3)} м²`],
+    ['─','',''],
+    ['δσ = √(δa²+δl²+δS²)', (delta_sigma_rel*100).toFixed(2)+' %', ''],
+    delta_sigma !== null ? ['Δσ = δσ·σ', sci(delta_sigma,4)+' (Ом·м)⁻¹', ''] : null,
+    sigma !== null ? ['σ ± Δσ', `(${sci(sigma,4)} ± ${delta_sigma?sci(delta_sigma,4):'?'}) (Ом·м)⁻¹`, '— РЕЗУЛЬТАТ'] : null,
+    ['─','',''],
+    ['δn = δR', (delta_n_rel*100).toFixed(2)+' %', ''],
+    n_carriers !== null ? ['n ± Δn', `(${sci(n_carriers,4)} ± ${delta_n?sci(delta_n,4):'?'}) м⁻³`, '— РЕЗУЛЬТАТ'] : null,
+    ['─','',''],
+    ['δμ = √(δσ²+δR²)', (delta_mu_rel*100).toFixed(2)+' %', ''],
+    mu_carriers !== null ? ['μ ± Δμ', `(${sci(mu_carriers,4)} ± ${delta_mu?sci(delta_mu,4):'?'}) м²/(В·с)`, '— РЕЗУЛЬТАТ'] : null,
+  ].filter(Boolean);
+
+  s('err-lines', errRows.map(([k,v,u]) => {
+    if (k === '─') return `<div class="rline sep"></div>`;
+    const hi = k.endsWith('— РЕЗУЛЬТАТ') || k === 'R ± ΔR' || k === 'σ ± Δσ' || k === 'n ± Δn' || k === 'μ ± Δμ';
+    const uFull = u === '— РЕЗУЛЬТАТ' ? '<span style="color:var(--ink3);font-size:11px">— РЕЗУЛЬТАТ</span>' : u;
+    return `<div class="rline"><div class="rk">${k}</div><div class="rv ${hi?'hi':''}">${v}</div><div class="ru">${uFull}</div></div>`;
+  }).join(''));
+
+  buildProtocol(p, vaxReg, vaxPP, hallReg, hallPP, sigma, delta_sigma_rel, delta_sigma, R_hall, delta_R_rel, delta_R, n_carriers, delta_n, mu_carriers, delta_mu);
+}
+
+// ─── Protocol ───
+function buildProtocol(p, vaxReg, vaxPP, hallReg, hallPP, sigma, relSigma, delta_sigma, R_hall, delta_R_rel, delta_R, n_carriers, delta_n, mu_carriers, delta_mu) {
+  const el = document.getElementById('protocol'); if (!el) return;
+  const D = '─'.repeat(62), L = [];
+  const pad = (s, n) => String(s).padEnd(n);
+
+  L.push('ПРОТОКОЛ ЛАБОРАТОРНОЙ РАБОТЫ');
+  L.push('Работа 2.01  «Эффект Холла в полупроводнике»');
+  L.push('СПбПУ Петра Великого · Датчик Холла ДХК-0.5 (Si, n-тип)');
+  L.push(D); L.push('');
+
+  L.push('1. ПАРАМЕТРЫ УСТАНОВКИ И ОБРАЗЦА');
+  L.push('');
+  L.push(`  d       = (${p.d_um} +/- ${p.dd_um}) мкм = ${sciProto(p.d,4)} +/- ${sciProto(p.dd,3)} м`);
+  L.push(`  l       = (${p.l_mm} +/- ${p.dl_mm}) мм  = ${sciProto(p.l,4)} +/- ${sciProto(p.dl,3)} м`);
+  L.push(`  h       = (${p.h_mm} +/- ${p.dh_mm}) мм  = ${sciProto(p.h,4)} +/- ${sciProto(p.dh,3)} м`);
+  L.push(`  S = d*h = ${sciProto(p.S,4)} м^2,  ΔS = ${sciProto(p.dS,4)} м^2  (δS = ${p.S>0?(p.dS/p.S*100).toFixed(1):'-'} %)`);
+  L.push(`  l/S     = ${sciProto(p.l/p.S,4)} м^-1`);
+  L.push(`  K       = (${p.K} +/- ${p.dK}) Тл/А`);
+  L.push(`  I       = (${p.I_mA} +/- ${p.dI_mA}) мА = ${sciProto(p.I,4)} +/- ${sciProto(p.dI,4)} А`);
+  L.push('');
+
+  L.push(D);
+  L.push('2. ТАБЛИЦА 1 — ВАХ  I(U||)');
+  L.push('');
+  L.push('  | №  |  U||, В    |  I, мА     |  I, А      |');
+  L.push('  |----|------------|------------|------------|');
+  let hasVax = false;
+  vaxRows.forEach((r, i) => {
+    if (r.u === '' || r.i === '') return;
+    const u = parseFloat(r.u), I_mA = parseFloat(r.i), I_A = I_mA*1e-3;
+    if (!isFinite(u)) return;
+    hasVax = true;
+    L.push(`  | ${pad(i+1,2)} | ${pad(sciProto(u,5),10)} | ${pad(I_mA.toFixed(2),10)} | ${pad(sciProto(I_A,5),10)} |`);
+  });
+  if (!hasVax) L.push('  | Данные не введены                              |');
+  L.push('');
+
+  L.push(D);
+  L.push('3. ВАХ — МНК:  I = a*U|| + b');
+  L.push('');
+  if (vaxReg) {
+    L.push(`  a     = ${sciProto(vaxReg.a,5)} А/В`);
+    L.push(`  b     = ${sciProto(vaxReg.b,5)} А`);
+    L.push(`  R^2   = ${vaxReg.r2.toFixed(5)}`);
+    L.push(`  s_a   = ${sciProto(vaxReg.sigA,4)} А/В`);
+    L.push(`  delta_a(МНК) = ${(vaxReg.sigA/vaxReg.a*100).toFixed(2)} %`);
+  } else { L.push('  Нет данных.'); }
+  L.push('');
+
+  L.push(D);
+  L.push('4. ВАХ — МЕТОД ПАРНЫХ ТОЧЕК → σ');
+  L.push('');
+  if (vaxPP) {
+    L.push(`  n = ${vaxPP.n}, k = ${vaxPP.k} пар, f = ${vaxPP.f}`);
+    L.push(`  | Пара | a_i (А/В)   | (a_i-<a>)^2   |`);
+    L.push(`  |------|-------------|---------------|`);
+    vaxPP.aPairs.forEach(pr => {
+      const dev2 = (pr.a - vaxPP.aMean)**2;
+      L.push(`  | ${pad(pr.i+','+pr.j,4)} | ${pad(sciProto(pr.a,5),11)} | ${pad(sciProto(dev2,4),13)} |`);
+    });
+    L.push(`  <a>     = ${sciProto(vaxPP.aMean,5)} А/В`);
+    L.push(`  sigma_a = ${sciProto(vaxPP.sigmaA,5)}`);
+    L.push(`  t(0.90;${vaxPP.f}) = ${vaxPP.t.toFixed(3)}`);
+    L.push(`  Delta_a = ${sciProto(vaxPP.deltaA,5)}`);
+    L.push(`  delta_a = ${(vaxPP.relDeltaA*100).toFixed(2)} %`);
+  } else { L.push('  Нет данных (< 4 точек).'); }
+  if (sigma !== null) {
+    L.push('');
+    L.push('  Удельная проводимость:');
+    L.push(`  sigma = <a> * (l/S) = ${sciProto(vaxPP?.aMean||vaxReg?.a,4)} * ${sciProto(p.l/p.S,4)} = ${sciProto(sigma,5)} (Ом*м)^-1`);
+    L.push(`  delta_sigma = ${(relSigma*100).toFixed(2)} %`);
+  }
+  L.push('');
+
+  L.push(D);
+  L.push('5. ТАБЛИЦА 2 — ХЭДС  U_perp(I_M)');
+  L.push('');
+  L.push(`  I_sample = ${sciProto(p.I,4)} А,  K = ${p.K} Тл/А`);
+  L.push('');
+  L.push('  | №  |  I_M, А    |  U_perp,мВ |  B, Тл     |  U_perp, В |');
+  L.push('  |----|------------|------------|------------|------------|');
+  let hasHall = false;
+  hallRows.forEach((r, i) => {
+    if (r.im === '' || r.u_perp === '') return;
+    const im = parseFloat(r.im), up = parseFloat(r.u_perp), B = im*p.K;
+    if (!isFinite(im)) return;
+    hasHall = true;
+    L.push(`  | ${pad(i+1,2)} | ${pad(sciProto(im,4),10)} | ${pad(up.toFixed(1),10)} | ${pad(sciProto(B,4),10)} | ${pad(sciProto(up*1e-3,5),10)} |`);
+  });
+  if (!hasHall) L.push('  | Данные не введены                                              |');
+  L.push('');
+
+  L.push(D);
+  L.push('6. ХЭДС — МНК:  U_perp = a*B + b');
+  L.push('');
+  if (hallReg) {
+    L.push(`  a     = ${sciProto(hallReg.a,5)} В/Тл`);
+    L.push(`  b     = ${sciProto(hallReg.b,5)} В`);
+    L.push(`  R^2   = ${hallReg.r2.toFixed(5)}`);
+    L.push(`  s_a   = ${sciProto(hallReg.sigA,4)} В/Тл`);
+  } else { L.push('  Нет данных.'); }
+  L.push('');
+
+  L.push(D);
+  L.push('7. ХЭДС — МЕТОД ПАРНЫХ ТОЧЕК → R (константа Холла)');
+  L.push('');
+  if (hallPP) {
+    L.push(`  n = ${hallPP.n}, k = ${hallPP.k} пар, f = ${hallPP.f}`);
+    L.push(`  | Пара | a_i (В/Тл)  | (a_i-<a>)^2   |`);
+    L.push(`  |------|-------------|---------------|`);
+    hallPP.aPairs.forEach(pr => {
+      const dev2 = (pr.a - hallPP.aMean)**2;
+      L.push(`  | ${pad(pr.i+','+pr.j,4)} | ${pad(sciProto(pr.a,5),11)} | ${pad(sciProto(dev2,4),13)} |`);
+    });
+    L.push(`  <a>     = ${sciProto(hallPP.aMean,5)} В/Тл`);
+    L.push(`  sigma_a = ${sciProto(hallPP.sigmaA,5)}`);
+    L.push(`  t(0.90;${hallPP.f}) = ${hallPP.t.toFixed(3)}`);
+    L.push(`  Delta_a = ${sciProto(hallPP.deltaA,5)}`);
+    L.push(`  delta_a = ${(hallPP.relDeltaA*100).toFixed(2)} %`);
+  } else { L.push('  Нет данных (< 4 точек).'); }
+  if (R_hall !== null) {
+    const aUsed = hallPP ? hallPP.aMean : hallReg?.a;
+    L.push('');
+    L.push('  Константа Холла:');
+    L.push(`  R = <a> * d / I = ${sciProto(aUsed,4)} * ${sciProto(p.d,4)} / ${sciProto(p.I,4)}`);
+    L.push(`    = ${sciProto(R_hall,5)} м^3/Кл`);
+    const sign = R_hall > 0 ? 'положительный (дырочная проводимость)' : 'отрицательный (электронная проводимость n-тип)';
+    L.push(`  Знак R: ${sign}`);
+  }
+  L.push('');
+
+  L.push(D);
+  L.push('8. РЕЗУЛЬТАТЫ');
+  L.push('');
+  if (R_hall !== null) {
+    const relD_p = p.d>0?p.dd/p.d:0, relI_p = p.I>0?p.dI/p.I:0;
+    const relA_p = hallPP ? hallPP.relDeltaA : 0;
+    L.push(`  R  = ${sciProto(R_hall,5)} м^3/Кл`);
+    L.push(`  deltaR = sqrt(delta_a^2 + delta_d^2 + delta_I^2)`);
+    L.push(`         = sqrt(${(relA_p*100).toFixed(2)}^2 + ${(relD_p*100).toFixed(2)}^2 + ${(relI_p*100).toFixed(2)}^2) %`);
+    L.push(`         = ${(delta_R_rel*100).toFixed(2)} %`);
+    if (delta_R) L.push(`  DeltaR = ${sciProto(delta_R,4)} м^3/Кл`);
+    L.push(`  R = (${sciProto(Math.abs(R_hall),4)} +/- ${delta_R?sciProto(delta_R,4):'?'}) м^3/Кл`);
+    L.push('');
+  }
+  if (sigma !== null) {
+    const relA_vax_p = vaxPP ? vaxPP.relDeltaA : 0;
+    const relL_p = p.l>0?p.dl/p.l:0, relS_p = p.S>0?p.dS/p.S:0;
+    L.push(`  sigma = ${sciProto(sigma,5)} (Ом*м)^-1`);
+    L.push(`  delta_sigma = sqrt(delta_a_vax^2 + delta_l^2 + delta_S^2)`);
+    L.push(`             = sqrt(${(relA_vax_p*100).toFixed(2)}^2 + ${(relL_p*100).toFixed(2)}^2 + ${(relS_p*100).toFixed(2)}^2) %`);
+    L.push(`             = ${(relSigma*100).toFixed(2)} %`);
+    if (delta_sigma) L.push(`  Delta_sigma = ${sciProto(delta_sigma,4)} (Ом*м)^-1`);
+    L.push(`  sigma = (${sciProto(sigma,4)} +/- ${delta_sigma?sciProto(delta_sigma,4):'?'}) (Ом*м)^-1`);
+    L.push('');
+  }
+  if (n_carriers !== null) {
+    L.push(`  n = 1 / (e * |R|) = 1 / (1.6×10^-19 * ${sciProto(Math.abs(R_hall),4)})`);
+    L.push(`    = ${sciProto(n_carriers,5)} м^-3 = ${sciProto(n_carriers*1e-6,4)} см^-3`);
+    if (delta_n) L.push(`  delta_n = delta_R = ${(delta_R_rel*100).toFixed(2)} %`);
+    if (delta_n) L.push(`  n = (${sciProto(n_carriers,4)} +/- ${sciProto(delta_n,4)}) м^-3`);
+    L.push('');
+  }
+  if (mu_carriers !== null) {
+    const delta_mu_rel_p = Math.sqrt(relSigma**2 + delta_R_rel**2);
+    L.push(`  mu = sigma * |R| = ${sciProto(sigma,4)} * ${sciProto(Math.abs(R_hall),4)}`);
+    L.push(`     = ${sciProto(mu_carriers,5)} м^2/(В*с) = ${sciProto(mu_carriers*1e4,4)} см^2/(В*с)`);
+    L.push(`  delta_mu = sqrt(delta_sigma^2 + delta_R^2) = ${(delta_mu_rel_p*100).toFixed(2)} %`);
+    const dMu = delta_mu || 0;
+    if (delta_mu) L.push(`  mu = (${sciProto(mu_carriers,4)} +/- ${sciProto(dMu,4)}) м^2/(В*с)`);
+    L.push('');
+  }
+
+  L.push(D);
+  L.push('9. ВЫВОД');
+  L.push('');
+  L.push('  [Напишите вывод самостоятельно, опираясь на факты ниже]');
+  L.push('');
+  if (vaxReg) L.push(`  R^2(ВАХ)  = ${vaxReg.r2.toFixed(4)} — подтверждает линейность ВАХ (закон Ома)`);
+  if (hallReg) L.push(`  R^2(ХЭДС) = ${hallReg.r2.toFixed(4)} — подтверждает линейность U_perp(B)`);
+  if (R_hall !== null) {
+    L.push(`  Знак R = ${R_hall > 0 ? '+' : '-'} → полупроводник ${R_hall < 0 ? 'n-типа (электронная проводимость)' : 'p-типа (дырочная проводимость)'}`);
+    L.push(`  |R| = ${sciProto(Math.abs(R_hall),4)} м^3/Кл,  погрешность ${(delta_R_rel*100).toFixed(1)} %`);
+  }
+  if (sigma !== null)      L.push(`  sigma = ${sciProto(sigma,4)} (Ом*м)^-1`);
+  if (n_carriers !== null) L.push(`  n = ${sciProto(n_carriers*1e-6,4)} см^-3`);
+  if (mu_carriers !== null) L.push(`  mu = ${sciProto(mu_carriers*1e4,4)} см^2/(В*с)${mu_carriers*1e4 > 0.01 && mu_carriers*1e4 < 50000 ? ' — разумный диапазон для Si' : ''}`);
+  L.push('');
+  L.push(D);
+  L.push('Дата выполнения: ' + new Date().toLocaleDateString('ru-RU'));
+  el.textContent = L.join('\n');
+}
+
+function copyProto() {
+  navigator.clipboard.writeText(document.getElementById('protocol').textContent)
+    .then(() => { const t = document.getElementById('toast'); t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); });
+}
+
+// ─── Init ───
+buildVaxTable();
+buildHallTable();
+initCharts();
+recalc();
+</script>
+</body>
+</html>
